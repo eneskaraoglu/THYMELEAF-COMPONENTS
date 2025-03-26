@@ -79,6 +79,38 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Satın Alma Onay Kartı -->
+            <div class="col-md-4 col-sm-6">
+                <div class="card h-100 menu-card">
+                    <div class="card-body text-center p-4">
+                        <div class="menu-icon text-info">
+                            <i class="bi bi-cart-check"></i>
+                        </div>
+                        <h3 class="card-title">Satın Alma Onayları</h3>
+                        <p class="card-text mb-4">
+                            Satın alma taleplerini onaylayın, reddedin ve takip edin. Detaylı filtreleme ve raporlama özellikleri.
+                        </p>
+                        <a th:href="@{/purchase-approvals}" class="btn btn-info btn-lg text-white">Satın Alma Onaylarına Git</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sipariş Onay Kartı -->
+            <div class="col-md-4 col-sm-6">
+                <div class="card h-100 menu-card">
+                    <div class="card-body text-center p-4">
+                        <div class="menu-icon text-danger">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <h3 class="card-title">Sipariş Onayları</h3>
+                        <p class="card-text mb-4">
+                            Müşteri siparişlerini onaylayın, reddedin ve takip edin. Detaylı filtreleme ve raporlama özellikleri.
+                        </p>
+                        <a th:href="@{/order-approvals}" class="btn btn-danger btn-lg">Sipariş Onaylarına Git</a>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Kalite Kontrol Modülü Kartları -->
@@ -146,6 +178,53 @@
                             Döneme ve ürüne göre özelleştirilmiş kalite kontrol raporları oluşturun ve indirin.
                         </p>
                         <a th:href="@{/quality-reports}" class="btn btn-secondary btn-lg">Raporlara Git</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dashboard Özet -->
+        <div class="card mt-5 mb-4 shadow-sm">
+            <div class="card-header bg-light">
+                <h3 class="mb-0">Onay Bekleyen İşlemler Özeti</h3>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card bg-warning bg-opacity-10 border-warning">
+                            <div class="card-body text-center py-4">
+                                <h1 class="display-4 fw-bold text-warning" th:text="${pendingPurchaseApprovals}">0</h1>
+                                <p class="mb-0">Bekleyen Satın Alma Talebi</p>
+                                <a th:href="@{/purchase-approvals(status=PENDING)}" class="btn btn-sm btn-warning mt-3">İncele</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card bg-danger bg-opacity-10 border-danger">
+                            <div class="card-body text-center py-4">
+                                <h1 class="display-4 fw-bold text-danger" th:text="${pendingOrderApprovals}">0</h1>
+                                <p class="mb-0">Bekleyen Sipariş Onayı</p>
+                                <a th:href="@{/order-approvals(status=PENDING)}" class="btn btn-sm btn-danger mt-3">İncele</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card bg-info bg-opacity-10 border-info">
+                            <div class="card-body text-center py-4">
+                                <h1 class="display-4 fw-bold text-info" th:text="${urgentPurchases}">0</h1>
+                                <p class="mb-0">Acil Satın Alma</p>
+                                <a th:href="@{/purchase-approvals}" class="btn btn-sm btn-info mt-3 text-white">İncele</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card bg-success bg-opacity-10 border-success">
+                            <div class="card-body text-center py-4">
+                                <h1 class="display-4 fw-bold text-success" th:text="${urgentDeliveries}">0</h1>
+                                <p class="mb-0">Acil Teslimat</p>
+                                <a th:href="@{/order-approvals}" class="btn btn-sm btn-success mt-3">İncele</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

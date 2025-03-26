@@ -154,3 +154,31 @@ INSERT INTO quality_criteria (name, expected_value, measured_value, passed, qual
 ('Kıvam', 'Kremsi', 'Kremsi', TRUE, 10),
 ('Asitlik', '0.6-0.8%', '0.9%', FALSE, 10);
 
+-- PURCHASE APPROVALS 
+INSERT INTO purchase_approvals (request_number, requester_name, department, supplier_name, status, request_date, delivery_date, total_amount, description, notes, category) 
+VALUES 
+('SA-2024-001', 'Ahmet Yılmaz', 'Üretim', 'ABC Tedarik A.Ş.', 'PENDING', '2024-03-20', '2024-03-30', 15250.50, 'Hammadde tedariki', 'Üretim için gerekli hammadde alımı', 'Hammadde'),
+('SA-2024-002', 'Ayşe Kaya', 'Pazarlama', 'XYZ Matbaa Ltd.', 'APPROVED', '2024-03-18', '2024-03-25', 7500.00, 'Broşür basımı', 'Yeni ürün tanıtım broşürleri', 'Pazarlama Malzemeleri'),
+('SA-2024-003', 'Mehmet Öz', 'Bilgi İşlem', 'Teknoloji A.Ş.', 'REJECTED', '2024-03-15', '2024-03-22', 28900.75, 'Bilgisayar alımı', 'Yeni işe alımlar için bilgisayar tedariki', 'BT Ekipmanları'),
+('SA-2024-004', 'Zeynep Demir', 'İnsan Kaynakları', 'Mobilya Ltd.', 'PENDING', '2024-03-23', '2024-04-05', 12450.00, 'Ofis mobilyası', 'Yeni ofis için mobilya alımı', 'Ofis Ekipmanları'),
+('SA-2024-005', 'Ali Yıldız', 'Üretim', 'Makine San. A.Ş.', 'PENDING', '2024-03-10', '2024-03-18', 45750.25, 'Yedek parça alımı', 'Acil üretim hattı yedek parçaları', 'Yedek Parça');
+
+-- ORDER APPROVALS
+INSERT INTO order_approvals (order_number, customer_name, sales_representative, status, order_date, delivery_date, total_amount, notes, payment_terms, shipping_method) 
+VALUES 
+('SIP-2024-001', 'Beyaz Eşya A.Ş.', 'Burak Şahin', 'PENDING', '2024-03-21', '2024-04-05', 78500.00, 'Yıllık anlaşma kapsamında ilk teslimat', 'Net 30', 'Kara Nakliyesi'),
+('SIP-2024-002', 'Elektronik Ltd.', 'Canan Aksoy', 'APPROVED', '2024-03-19', '2024-03-28', 32450.75, 'Acil teslimat talep edildi', 'Net 15', 'Hava Kargo'),
+('SIP-2024-003', 'Tekstil San. A.Ş.', 'Deniz Yılmaz', 'REJECTED', '2024-03-16', '2024-03-25', 14750.50, 'Müşteri kredisi yetersiz', 'Peşin Ödeme', 'Deniz Nakliyesi'),
+('SIP-2024-004', 'Gıda Dağıtım Ltd.', 'Emre Kaya', 'PENDING', '2024-03-22', '2024-03-24', 28900.25, 'Bayram öncesi acil teslimat', 'Net 7', 'Kara Nakliyesi'),
+('SIP-2024-005', 'Market Zinciri A.Ş.', 'Fatma Demir', 'PENDING', '2024-03-15', '2024-03-20', 45600.00, 'Teslimatta özel paketleme gerekli', 'Net 45', 'Kara Nakliyesi');
+
+-- PRODUCTS
+INSERT INTO product (name, code, price, stock, description, manufacturing_date, expiry_date) 
+VALUES 
+('Kablosuz Kulaklık', 'URN001', 250.00, 100, 'Yüksek ses kaliteli, gürültü engelleyici özellikli kablosuz kulaklık', '2024-02-15', '2026-02-15'),
+('Akıllı Saat', 'URN002', 1200.50, 50, 'Nabız ölçer, adım sayar özellikleri olan su geçirmez akıllı saat', '2024-01-20', '2026-01-20'),
+('Taşınabilir Şarj Cihazı', 'URN003', 180.75, 200, '10000 mAh kapasiteli hızlı şarj özellikli powerbank', '2024-03-01', '2025-03-01'),
+('Bluetooth Hoparlör', 'URN004', 350.00, 80, 'Su geçirmez, 12 saat pil ömrü olan bluetooth hoparlör', '2024-02-25', '2026-02-25'),
+('Oyun Konsolu', 'URN005', 9500.00, 25, 'Yüksek performanslı yeni nesil oyun konsolu', '2024-01-10', '2027-01-10');
+
+

@@ -12,7 +12,7 @@ import java.util.List;
 public class NavigationController {
 
     // Ana sayfa - Navigasyon sayfası
-    @GetMapping("/")
+    @GetMapping("/navigation")
     public String home(Model model) {
         // Menü öğeleri için model hazırlama
         model.addAttribute("pageTitle", "Ana Sayfa");
