@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${product.id == null ? 'Yeni Ürün Ekle' : 'Ürün Düzenle'}">Ürün Formu</title>
+    
+    <!-- Ortak CSS -->
+    <th:block th:replace="~{fragments :: commonCss}"></th:block>
+    
+    <style>
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .form-card {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-radius: 10px;
+        }
+        
+        /* Mobil uyumluluk için ayarlar */
+        @media (max-width: 576px) {
+            .form-actions .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header navigasyon -->
+        <div th:replace="~{fragments :: header('products')}"></div>
+        
+        <div class="form-container">
+            <div class="card form-card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0" th:text="${product.id == null ? 'Yeni Ürün Ekle' : 'Ürün Düzenle'}"></h4>
+                </div>
+                <div class="card-body p-4">
+                    <form th:action="@{/products}" th:object="${product}" method="post" class="needs-validation" novalidate>
+                        <input type="hidden" th:field="*{id}"/>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="code" class="form-label">Ürün Kodu</label>
+                                <input type="text" class="form-control" id="code" th:field="*{code}" required>
+                                <div class="invalid-feedback">
+                                    Lütfen ürün kodu girin.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Ürün Adı</label>
+                                <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                                <div class="invalid-feedback">
+                                    Lütfen ürün adı girin.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="price" class="form-label">Fiyat</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.01" class="form-control" id="price" th:field="*{price}" required>
+                                    <span class="input-group-text">₺</span>
+                                    <div class="invalid-feedback">
+                                        Lütfen geçerli bir fiyat girin.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="stock" class="form-label">Stok</label>
+                                <input type="number" class="form-control" id="stock" th:field="*{stock}" required>
+                                <div class="invalid-feedback">
+                                    Lütfen stok miktarı girin.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="manufacturingDate" class="form-label">Üretim Tarihi</label>
+                                <input type="date" class="form-control" id="manufacturingDate" th:field="*{manufacturingDate}" required>
+                                <div class="invalid-feedback">
+                                    Lütfen üretim tarihi seçin.
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="expiryDate" class="form-label">Son Kullanma Tarihi</label>
+                                <input type="date" class="form-control" id="expiryDate" th:field="*{expiryDate}" required>
+                                <div class="invalid-feedback">
+                                    Lütfen son kullanma tarihi seçin.
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="description" class="form-label">Açıklama</label>
+                                <textarea class="form-control" id="description" th:field="*{description}" rows="4"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 d-flex justify-content-between flex-wrap form-actions">
+                            <a th:href="@{/products}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Listeye Dön
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> <span th:text="${product.id == null ? 'Ekle' : 'Güncelle'}"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div th:replace="~{fragments :: footer}"></div>
+    </div>
+
+    <!-- Ortak JavaScript -->
+    <th:block th:replace="~{fragments :: commonJs}"></th:block>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tarih aralığı validasyonu
+        document.getElementById('manufacturingDate').addEventListener('change', function() {
+            document.getElementById('expiryDate').min = this.value;
+        });
+
+        document.getElementById('expiryDate').addEventListener('change', function() {
+            document.getElementById('manufacturingDate').max = this.value;
+        });
+        
+        // Bootstrap form validasyonu
+        const forms = document.querySelectorAll('.needs-validation');
+        
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+        });
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalite Kontrol Takibi</title>
+    
+    <!-- Ortak CSS -->
+    <th:block th:replace="~{fragments :: commonCss}"></th:block>
+    
+    <style>
+        /* Kalite kontrol listesi stilleri */
+        .filter-toggle {
+            cursor: pointer;
+        }
+        
+        .qc-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .qc-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        .status-pending {
+            background-color: #ffc107;
+        }
+        
+        .status-approved {
+            background-color: #28a745;
+        }
+        
+        .status-rejected {
+            background-color: #dc3545;
+        }
+        
+        .status-inprogress {
+            background-color: #17a2b8;
+        }
+        
+        /* Detay modal için */
+        .detail-section {
+            margin-bottom: 15px;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        /* Mobil görünüm için tablo ayarları */
+        @media (max-width: 768px) {
+            .qc-grid .col {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+            
+            .table-view th:nth-child(5),
+            .table-view th:nth-child(6),
+            .table-view td:nth-child(5),
+            .table-view td:nth-child(6) {
+                display: none;
+            }
+            
+            .action-buttons {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header navigasyon -->
+        <div th:replace="~{fragments :: header('quality-control')}"></div>
+        
+        <h2>Kalite Kontrol Takibi</h2>
+        
+        <!-- Ekran boyut bilgisi (Geliştirme için) -->
+        <div th:replace="~{fragments :: screenInfo}"></div>
+        
+        <!-- Filtreleme Formu -->
+        <div class="card mb-4 filter-card">
+            <div class="card-header d-flex justify-content-between align-items-center filter-toggle" 
+                 data-bs-toggle="collapse" data-bs-target="#filterBody" id="filterToggle">
+                <h5 class="mb-0">Filtreler</h5>
+                <i class="bi bi-chevron-down"></i>
+            </div>
+            <div class="card-body collapse show" id="filterBody">
+                <form th:action="@{/quality-controls}" method="get" class="row g-3 filter-form">
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label for="qcCode" class="form-label">QC Kodu</label>
+                        <input type="text" class="form-control" id="qcCode" name="qcCode" 
+                               th:value="${filter?.qcCode}">
+                    </div>
+                    
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label for="productCode" class="form-label">Ürün Kodu</label>
+                        <input type="text" class="form-control" id="productCode" name="productCode" 
+                               th:value="${filter?.productCode}">
+                    </div>
+                    
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label for="status" class="form-label">Durum</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">Tümü</option>
+                            <option th:each="status : ${statuses}"
+                                    th:value="${status}"
+                                    th:text="${status.displayValue}"
+                                    th:selected="${status == filter?.status}">
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label for="inspector" class="form-label">Kontrolör</label>
+                        <select class="form-select" id="inspector" name="inspector">
+                            <option value="">Tümü</option>
+                            <option th:each="inspector : ${inspectors}"
+                                    th:value="${inspector.id}"
+                                    th:text="${inspector.name}"
+                                    th:selected="${inspector.id == filter?.inspector}">
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <label for="startDate" class="form-label">Başlangıç Tarihi</label>
+                        <input type="date" class="form-control" id="startDate" name="startDate"
+                               th:value="${filter?.startDate}">
+                    </div>
+                    
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <label for="endDate" class="form-label">Bitiş Tarihi</label>
+                        <input type="date" class="form-control" id="endDate" name="endDate"
+                               th:value="${filter?.endDate}">
+                    </div>
+                    
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <label for="batchNumber" class="form-label">Parti Numarası</label>
+                        <input type="text" class="form-control" id="batchNumber" name="batchNumber"
+                               th:value="${filter?.batchNumber}">
+                    </div>
+                    
+                    <div class="col-12 d-flex justify-content-between flex-wrap">
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-filter"></i> Filtrele
+                            </button>
+                            <a th:href="@{/quality-controls}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Temizle
+                            </a>
+                        </div>
+                        <div class="mt-2 mt-sm-0">
+                            <a th:href="@{/quality-controls/new}" class="btn btn-success">
+                                <i class="bi bi-plus-circle"></i> Yeni Kalite Kontrol
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Görünüm ve Sayfa Boyutu Kontrolü -->
+        <div class="row mb-3 align-items-center">
+            <div class="col-12 col-md-auto mb-2 mb-md-0">
+                <div class="input-group input-group-sm">
+                    <label class="input-group-text" for="pageSize">Kayıt/Sayfa</label>
+                    <select class="form-select" id="pageSize" onchange="changePageSize(this.value)">
+                        <option th:each="size : ${pageSizes}"
+                                th:value="${size}"
+                                th:text="${size}"
+                                th:selected="${size == selectedPageSize}">
+                        </option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-12 col-md-auto ms-md-auto">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary active" id="tableViewBtn">
+                        <i class="bi bi-table"></i> Tablo
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="gridViewBtn">
+                        <i class="bi bi-grid-3x3-gap"></i> Grid
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grid Görünümü -->
+        <div id="gridView" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 qc-grid" style="display:none;">
+            <div class="col" th:each="qc : ${qualityControls}">
+                <div class="card h-100 qc-card position-relative">
+                    <div class="card-header d-flex justify-content-between">
+                        <span class="badge bg-secondary" th:text="${qc.qcCode}">QC001</span>
+							<span th:if="${qc.status != null && qc.status.name() == 'PENDING'}"
+							      class="badge bg-warning">Beklemede</span>
+							<span th:if="${qc.status != null && qc.status.name() == 'APPROVED'}"
+							      class="badge bg-success">Onaylandı</span>
+							<span th:if="${qc.status != null && qc.status.name() == 'REJECTED'}"
+							      class="badge bg-danger">Reddedildi</span>
+							<span th:if="${qc.status != null && qc.status.name() == 'IN_PROGRESS'}"
+							      class="badge bg-info">İşlemde</span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Ürün: <span th:text="${qc.productName}">Ürün Adı</span></h5>
+                        <div class="small text-muted mb-2">
+                            <div>Ürün Kodu: <span th:text="${qc.productCode}">PRD001</span></div>
+                            <div>Parti: <span th:text="${qc.batchNumber}">BT12345</span></div>
+                        </div>
+                        <div class="mb-2">
+                            <div>Kontrolör: <span th:text="${qc.inspectorName}">Ahmet Yılmaz</span></div>
+                            <div>Tarih: <span th:text="${#temporals.format(qc.inspectionDate, 'dd/MM/yyyy')}">01/01/2025</span></div>
+                        </div>
+                        <p class="card-text small" th:if="${qc.notes}" th:text="${qc.notes}">Kalite kontrol notları burada yer alacak.</p>
+                    </div>
+                    <div class="card-footer d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-info btn-sm" 
+                                data-bs-toggle="modal" 
+                                th:data-bs-target="'#detailModal' + ${qc.id}">
+                            <i class="bi bi-eye"></i> Detay
+                        </button>
+                        <a th:href="@{/quality-controls/edit/{id}(id=${qc.id})}" class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil"></i> Düzenle
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tablo Görünümü -->
+        <div id="tableView" class="table-responsive">
+            <table class="table table-hover table-view">
+                <thead>
+                <tr>
+                    <th>QC Kodu</th>
+                    <th>Ürün Kodu</th>
+                    <th>Parti No</th>
+                    <th>Durum</th>
+                    <th>Kontrolör</th>
+                    <th>Kontrol Tarihi</th>
+                    <th class="text-end">İşlemler</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="qc : ${qualityControls}">
+                    <td th:text="${qc.qcCode}">QC001</td>
+                    <td th:text="${qc.productCode}">PRD001</td>
+                    <td th:text="${qc.batchNumber}">BT12345</td>
+                    <td>
+						  <span th:if="${qc.status != null && qc.status.name() == 'PENDING'}">
+						    <span class="status-indicator status-pending"></span> Beklemede
+						</span>
+						<span th:if="${qc.status != null && qc.status.name() == 'APPROVED'}">
+						    <span class="status-indicator status-approved"></span> Onaylandı
+						</span>
+						<span th:if="${qc.status != null && qc.status.name() == 'REJECTED'}">
+						    <span class="status-indicator status-rejected"></span> Reddedildi
+						</span>
+						<span th:if="${qc.status != null && qc.status.name() == 'IN_PROGRESS'}">
+						    <span class="status-indicator status-inprogress"></span> İşlemde
+						</span>
+                    </td>
+                    <td th:text="${qc.inspectorName}">Ahmet Yılmaz</td>
+                    <td th:text="${#temporals.format(qc.inspectionDate, 'dd/MM/yyyy')}">01/01/2025</td>
+                    <td class="text-end">
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-info btn-sm" 
+                                    data-bs-toggle="modal" 
+                                    th:data-bs-target="'#detailModal' + ${qc.id}">
+                                <i class="bi bi-eye"></i> Detay
+                            </button>
+                            <a th:href="@{/quality-controls/edit/{id}(id=${qc.id})}" class="btn btn-warning btn-sm">
+                                <i class="bi bi-pencil"></i> Düzenle
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Sayfalama -->
+        <div th:if="${qualityControls.totalPages > 0}" class="d-flex justify-content-center mt-4">
+            <nav>
+                <ul class="pagination flex-wrap">
+                    <li class="page-item" th:classappend="${qualityControls.number == 0} ? 'disabled'">
+                        <a class="page-link" 
+                           th:href="@{/quality-controls(page=${qualityControls.number - 1}, 
+                                           size=${selectedPageSize},
+                                           qcCode=${filter.qcCode}, 
+                                           productCode=${filter.productCode},
+                                           status=${filter.status},
+                                           inspector=${filter.inspector},
+                                           batchNumber=${filter.batchNumber}, 
+                                           startDate=${filter.startDate}, 
+                                           endDate=${filter.endDate})}"
+                           tabindex="-1">Önceki</a>
+                    </li>
+                    
+                    <li class="page-item" 
+                        th:each="pageNumber : ${pageNumbers}"
+                        th:classappend="${pageNumber == qualityControls.number} ? 'active'">
+                        <a class="page-link" 
+                           th:href="@{/quality-controls(page=${pageNumber},
+                                           size=${selectedPageSize},
+                                           qcCode=${filter.qcCode}, 
+                                           productCode=${filter.productCode},
+                                           status=${filter.status},
+                                           inspector=${filter.inspector},
+                                           batchNumber=${filter.batchNumber}, 
+                                           startDate=${filter.startDate}, 
+                                           endDate=${filter.endDate})}"
+                           th:text="${pageNumber + 1}"></a>
+                    </li>
+                    
+                    <li class="page-item" th:classappend="${qualityControls.number + 1 == qualityControls.totalPages} ? 'disabled'">
+                        <a class="page-link" 
+                           th:href="@{/quality-controls(page=${qualityControls.number + 1},
+                                           size=${selectedPageSize},
+                                           qcCode=${filter.qcCode}, 
+                                           productCode=${filter.productCode},
+                                           status=${filter.status},
+                                           inspector=${filter.inspector},
+                                           batchNumber=${filter.batchNumber}, 
+                                           startDate=${filter.startDate}, 
+                                           endDate=${filter.endDate})}">Sonraki</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        
+        <!-- Sayfa Bilgisi -->
+        <div class="mt-2 text-center" th:if="${qualityControls.totalElements > 0}">
+            <small class="text-muted">
+                Toplam <span th:text="${qualityControls.totalElements}"></span> kayıttan 
+                <span th:text="${qualityControls.number * qualityControls.size + 1}"></span> - 
+                <span th:text="${qualityControls.number * qualityControls.size + qualityControls.numberOfElements}"></span> 
+                arası gösteriliyor
+            </small>
+        </div>
+        
+        <!-- Detay Modalları -->
+        <div th:each="qc : ${qualityControls}" th:id="'detailModal' + ${qc.id}" class="modal fade" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Kalite Kontrol Detayları - <span th:text="${qc.qcCode}">QC001</span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-section">
+                                    <div class="detail-label">Kalite Kontrol Bilgileri</div>
+                                    <table class="table table-sm table-bordered">
+                                        <tr>
+                                            <th>QC Kodu</th>
+                                            <td th:text="${qc.qcCode}">QC001</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Durum</th>
+												<td>
+												    <span th:if="${qc.status != null}" th:switch="${qc.status.name()}">
+												        <span th:case="'PENDING'" class="badge bg-warning">Beklemede</span>
+												        <span th:case="'APPROVED'" class="badge bg-success">Onaylandı</span>
+												        <span th:case="'REJECTED'" class="badge bg-danger">Reddedildi</span>
+												        <span th:case="'IN_PROGRESS'" class="badge bg-info">İşlemde</span>
+												        <span th:case="*" class="badge bg-secondary">Bilinmiyor</span>
+												    </span>
+												    <span th:if="${qc.status == null}" class="badge bg-secondary">Tanımsız</span>
+												</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Kontrolör</th>
+                                            <td th:text="${qc.inspectorName}">Ahmet Yılmaz</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Kontrol Tarihi</th>
+                                            <td th:text="${#temporals.format(qc.inspectionDate, 'dd/MM/yyyy')}">01/01/2025</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-section">
+                                    <div class="detail-label">Ürün Bilgileri</div>
+                                    <table class="table table-sm table-bordered">
+                                        <tr>
+                                            <th>Ürün Kodu</th>
+                                            <td th:text="${qc.productCode}">PRD001</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Ürün Adı</th>
+                                            <td th:text="${qc.productName}">Ürün Adı</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Parti No</th>
+                                            <td th:text="${qc.batchNumber}">BT12345</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Üretim Tarihi</th>
+                                            <td th:text="${#temporals.format(qc.manufacturingDate, 'dd/MM/yyyy')}">01/01/2025</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Kalite Kontrol Kriterleri -->
+                        <div class="detail-section mt-3">
+                            <div class="detail-label">Kalite Kontrol Kriterleri</div>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Kriter</th>
+                                        <th>Beklenen Değer</th>
+                                        <th>Ölçülen Değer</th>
+                                        <th>Sonuç</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="criteria : ${qc.criteriaList}">
+                                        <td th:text="${criteria.name}">Ağırlık</td>
+                                        <td th:text="${criteria.expectedValue}">100g ±5g</td>
+                                        <td th:text="${criteria.measuredValue}">98g</td>
+                                        <td>
+                                            <span th:if="${criteria.passed}" class="badge bg-success">Başarılı</span>
+                                            <span th:unless="${criteria.passed}" class="badge bg-danger">Başarısız</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Notlar -->
+                        <div class="detail-section mt-3">
+                            <div class="detail-label">Notlar</div>
+                            <div class="border rounded p-3 bg-light">
+                                <p th:text="${qc.notes}" class="mb-0">Kalite kontrol notları burada yer alacak.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                        <a th:href="@{/quality-controls/edit/{id}(id=${qc.id})}" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Düzenle
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div th:replace="~{fragments :: footer}"></div>
+    </div>
+
+    <!-- Ortak JavaScript -->
+    <th:block th:replace="~{fragments :: commonJs}"></th:block>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tarih aralığı validasyonu
+        document.getElementById('startDate')?.addEventListener('change', function() {
+            const endDateEl = document.getElementById('endDate');
+            if (endDateEl) endDateEl.min = this.value;
+        });
+
+        document.getElementById('endDate')?.addEventListener('change', function() {
+            const startDateEl = document.getElementById('startDate');
+            if (startDateEl) startDateEl.max = this.value;
+        });
+
+        // Görünüm değiştirme
+        const tableViewBtn = document.getElementById('tableViewBtn');
+        const gridViewBtn = document.getElementById('gridViewBtn');
+        const tableView = document.getElementById('tableView');
+        const gridView = document.getElementById('gridView');
+        
+        // Kullanıcı tercihi saklanması
+        const savedView = localStorage.getItem('qcView') || 'table';
+        
+        if (savedView === 'grid') {
+            tableView.style.display = 'none';
+            gridView.style.display = 'flex';
+            tableViewBtn.classList.remove('active');
+            gridViewBtn.classList.add('active');
+        }
+
+        tableViewBtn?.addEventListener('click', function() {
+            gridView.style.display = 'none';
+            tableView.style.display = 'block';
+            gridViewBtn.classList.remove('active');
+            tableViewBtn.classList.add('active');
+            localStorage.setItem('qcView', 'table');
+        });
+
+        gridViewBtn?.addEventListener('click', function() {
+            tableView.style.display = 'none';
+            gridView.style.display = 'flex';
+            tableViewBtn.classList.remove('active');
+            gridViewBtn.classList.add('active');
+            localStorage.setItem('qcView', 'grid');
+        });
+    });
+
+    function changePageSize(size) {
+        // Mevcut URL'den parametreleri al
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Sayfa boyutunu güncelle ve sayfa numarasını sıfırla
+        urlParams.set('size', size);
+        urlParams.set('page', 0);
+        
+        // Yeni URL'ye yönlendir
+        window.location.href = window.location.pathname + '?' + urlParams.toString();
+    }
+    </script>
+</body>
+</html>

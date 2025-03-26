@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${qualityControl.id == null ? 'Yeni Kalite Kontrol' : 'Kalite Kontrol Düzenle'}">Kalite Kontrol Formu</title>
+    
+    <!-- Ortak CSS -->
+    <th:block th:replace="~{fragments :: commonCss}"></th:block>
+    
+    <style>
+        .form-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .form-card {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-radius: 10px;
+        }
+        
+        .criteria-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .criteria-item {
+            transition: background-color 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .criteria-item:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .criteria-item.passed {
+            border-left-color: #28a745;
+        }
+        
+        .criteria-item.failed {
+            border-left-color: #dc3545;
+        }
+        
+        .add-criteria-btn {
+            margin-bottom: 20px;
+        }
+        
+        /* Mobil uyumluluk için ayarlar */
+        @media (max-width: 576px) {
+            .form-actions .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header navigasyon -->
+        <div th:replace="~{fragments :: header('quality-control')}"></div>
+        
+        <div class="form-container">
+            <div class="card form-card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0" th:text="${qualityControl.id == null ? 'Yeni Kalite Kontrol' : 'Kalite Kontrol Düzenle'}"></h4>
+                </div>
+                <div class="card-body p-4">
+                    <form th:action="@{/quality-controls}" th:object="${qualityControl}" method="post" class="needs-validation" novalidate>
+                        <input type="hidden" th:field="*{id}"/>
+                        
+                        <div class="row g-3">
+                            <!-- QC Kodu -->
+                            <div class="col-md-6">
+                                <label for="qcCode" class="form-label">QC Kodu</label>
+                                <input type="text" class="form-control" id="qcCode" th:field="*{qcCode}" required>
+                                <div class="invalid-feedback">
+                                    Lütfen QC kodu girin.
+                                </div>
+                            </div>
+                            
+                            <!-- Durum -->
+                            <div class="col-md-6">
+                                <label for="status" class="form-label">Durum</label>
+                                <select class="form-select" id="status" th:field="*{status}" required>
+                                    <option value="">Seçiniz...</option>
+                                    <option th:each="statusOption : ${statuses}"
+                                            th:value="${statusOption}"
+                                            th:text="${statusOption.displayValue}">
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Lütfen durum seçin.
+                                </div>
+                            </div>
+                            
+                            <!-- Ürün Seçimi -->
+                            <div class="col-md-6">
+                                <label for="productId" class="form-label">Ürün</label>
+                                <select class="form-select" id="productId" th:field="*{productId}" required>
+                                    <option value="">Seçiniz...</option>
+                                    <option th:each="product : ${products}"
+                                            th:value="${product.id}"
+                                            th:text="${product.code + ' - ' + product.name}">
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Lütfen ürün seçin.
+                                </div>
+                            </div>
+                            
+                            <!-- Parti Numarası -->
+                            <div class="col-md-6">
+                                <label for="batchNumber" class="form-label">Parti Numarası</label>
+                                <input type="text" class="form-control" id="batchNumber" th:field="*{batchNumber}" required>
+                                <div class="invalid-feedback">
+                                    Lütfen parti numarası girin.
+                                </div>
+                            </div>
+                            
+                            <!-- Kontrolör -->
+                            <div class="col-md-6">
+                                <label for="inspectorId" class="form-label">Kontrolör</label>
+                                <select class="form-select" id="inspectorId" th:field="*{inspectorId}" required>
+                                    <option value="">Seçiniz...</option>
+                                    <option th:each="inspector : ${inspectors}"
+                                            th:value="${inspector.id}"
+                                            th:text="${inspector.name}">
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Lütfen kontrolör seçin.
+                                </div>
+                            </div>
+                            
+                            <!-- Kontrol Tarihi -->
+                            <div class="col-md-6">
+                                <label for="inspectionDate" class="form-label">Kontrol Tarihi</label>
+                                <input type="date" class="form-control" id="inspectionDate" th:field="*{inspectionDate}" required>
+                                <div class="invalid-feedback">
+                                    Lütfen kontrol tarihi seçin.
+                                </div>
+                            </div>
+                            
+                            <!-- Açıklama / Notlar -->
+                            <div class="col-12">
+                                <label for="notes" class="form-label">Notlar</label>
+                                <textarea class="form-control" id="notes" th:field="*{notes}" rows="3"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Kalite Kontrol Kriterleri -->
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Kalite Kontrol Kriterleri</h5>
+                                <button type="button" class="btn btn-success btn-sm" id="addCriteriaBtn">
+                                    <i class="bi bi-plus-circle"></i> Kriter Ekle
+                                </button>
+                            </div>
+                            
+                            <div class="criteria-container">
+                                <div id="criteriaList">
+                                    <div th:each="criteria, stat : *{criteriaList}" class="card mb-3 criteria-item"
+                                         th:classappend="${criteria.passed} ? 'passed' : 'failed'">
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <input type="hidden" th:field="*{criteriaList[__${stat.index}__].id}" />
+                                                
+                                                <div class="col-md-4">
+                                                    <label th:for="'criteriaList' + ${stat.index} + '.name'" class="form-label">Kriter Adı</label>
+                                                    <input type="text" class="form-control" 
+                                                           th:field="*{criteriaList[__${stat.index}__].name}" required>
+                                                    <div class="invalid-feedback">
+                                                        Lütfen kriter adı girin.
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-3">
+                                                    <label th:for="'criteriaList' + ${stat.index} + '.expectedValue'" class="form-label">Beklenen Değer</label>
+                                                    <input type="text" class="form-control" 
+                                                           th:field="*{criteriaList[__${stat.index}__].expectedValue}" required>
+                                                    <div class="invalid-feedback">
+                                                        Lütfen beklenen değeri girin.
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-3">
+                                                    <label th:for="'criteriaList' + ${stat.index} + '.measuredValue'" class="form-label">Ölçülen Değer</label>
+                                                    <input type="text" class="form-control" 
+                                                           th:field="*{criteriaList[__${stat.index}__].measuredValue}" required>
+                                                    <div class="invalid-feedback">
+                                                        Lütfen ölçülen değeri girin.
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-2">
+                                                    <label th:for="'criteriaList' + ${stat.index} + '.passed'" class="form-label">Sonuç</label>
+                                                    <div class="form-check form-switch mt-2">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               th:field="*{criteriaList[__${stat.index}__].passed}">
+                                                        <label class="form-check-label">
+                                                            <span th:text="*{criteriaList[__${stat.index}__].passed} ? 'Başarılı' : 'Başarısız'"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-12 d-flex justify-content-end">
+                                                    <button type="button" class="btn btn-danger btn-sm remove-criteria-btn">
+                                                        <i class="bi bi-trash"></i> Kaldır
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Kriter yok uyarısı -->
+                                <div id="noCriteriaWarning" th:if="${#lists.isEmpty(qualityControl.criteriaList)}" 
+                                     class="alert alert-warning">
+                                    Henüz kalite kontrol kriteri eklenmemiş. Lütfen "Kriter Ekle" butonunu kullanarak kriter ekleyin.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 d-flex justify-content-between flex-wrap form-actions">
+                            <a th:href="@{/quality-controls}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Listeye Dön
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> <span th:text="${qualityControl.id == null ? 'Kaydet' : 'Güncelle'}"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div th:replace="~{fragments :: footer}"></div>
+    </div>
+
+    <!-- Yeni Kriter Şablonu (Gizli) -->
+    <div id="criteriaTemplate" style="display: none;">
+        <div class="card mb-3 criteria-item">
+            <div class="card-body">
+                <div class="row g-3">
+                    <input type="hidden" name="criteriaList[INDEX].id" value="" />
+                    
+                    <div class="col-md-4">
+                        <label for="criteriaList[INDEX].name" class="form-label">Kriter Adı</label>
+                        <input type="text" class="form-control" name="criteriaList[INDEX].name" required>
+                        <div class="invalid-feedback">
+                            Lütfen kriter adı girin.
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="criteriaList[INDEX].expectedValue" class="form-label">Beklenen Değer</label>
+                        <input type="text" class="form-control" name="criteriaList[INDEX].expectedValue" required>
+                        <div class="invalid-feedback">
+                            Lütfen beklenen değeri girin.
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="criteriaList[INDEX].measuredValue" class="form-label">Ölçülen Değer</label>
+                        <input type="text" class="form-control" name="criteriaList[INDEX].measuredValue" required>
+                        <div class="invalid-feedback">
+                            Lütfen ölçülen değeri girin.
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="criteriaList[INDEX].passed" class="form-label">Sonuç</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="criteriaList[INDEX].passed">
+                            <label class="form-check-label">Başarısız</label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 d-flex justify-content-end">
+                        <button type="button" class="btn btn-danger btn-sm remove-criteria-btn">
+                            <i class="bi bi-trash"></i> Kaldır
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ortak JavaScript -->
+    <th:block th:replace="~{fragments :: commonJs}"></th:block>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Bootstrap form validasyonu
+        const form = document.querySelector('.needs-validation');
+        
+        if (form) {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+        }
+        
+        // Kriter ekleme
+        let criteriaIndex = document.querySelectorAll('.criteria-item').length;
+        const criteriaList = document.getElementById('criteriaList');
+        const noCriteriaWarning = document.getElementById('noCriteriaWarning');
+        
+        document.getElementById('addCriteriaBtn').addEventListener('click', function() {
+            // Şablonu al ve index'i güncelle
+            let template = document.getElementById('criteriaTemplate').innerHTML;
+            template = template.replace(/INDEX/g, criteriaIndex++);
+            
+            // Yeni kriteri listeye ekle
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = template;
+            const newCriteria = tempDiv.firstElementChild;
+            
+            criteriaList.appendChild(newCriteria);
+            
+            // Uyarıyı gizle
+            if (noCriteriaWarning) {
+                noCriteriaWarning.style.display = 'none';
+            }
+            
+            // Kaldırma butonlarını aktifleştir
+            attachRemoveListeners();
+            
+            // Geçti/kaldı değişikliğini izle
+            attachPassedChangeListeners();
+        });
+        
+        // Kriter kaldırma
+        function attachRemoveListeners() {
+            document.querySelectorAll('.remove-criteria-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const criteriaItem = this.closest('.criteria-item');
+                    criteriaItem.remove();
+                    
+                    // Eğer hiç kriter kalmadıysa uyarıyı göster
+                    if (criteriaList.children.length === 0 && noCriteriaWarning) {
+                        noCriteriaWarning.style.display = 'block';
+                    }
+                });
+            });
+        }
+        
+        // Geçti/kaldı değişimi
+        function attachPassedChangeListeners() {
+            document.querySelectorAll('input[type="checkbox"][name$=".passed"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const criteriaItem = this.closest('.criteria-item');
+                    const label = this.nextElementSibling;
+                    
+                    if (this.checked) {
+                        criteriaItem.classList.remove('failed');
+                        criteriaItem.classList.add('passed');
+                        label.textContent = 'Başarılı';
+                    } else {
+                        criteriaItem.classList.remove('passed');
+                        criteriaItem.classList.add('failed');
+                        label.textContent = 'Başarısız';
+                    }
+                });
+            });
+        }
+        
+        // Sayfa yüklendiğinde mevcut kaldırma butonlarına listener ekle
+        attachRemoveListeners();
+        
+        // Sayfa yüklendiğinde mevcut geçti/kaldı checkboxlarına listener ekle
+        attachPassedChangeListeners();
+        
+        // Ürün seçimi değiştiğinde ürüne özel kriterleri otomatik ekle
+        document.getElementById('productId')?.addEventListener('change', function() {
+            const productId = this.value;
+            if (!productId) return;
+            
+            // Bu kısımda AJAX ile ürüne ait kriterleri getirme işlemi yapılabilir
+            // Örnek: 
+            /*
+            fetch(`/api/products/${productId}/criteria`)
+                .then(response => response.json())
+                .then(data => {
+                    // Ürüne özgü kriterleri ekle
+                    data.forEach(criteria => {
+                        // Yeni kriter ekle
+                        let template = document.getElementById('criteriaTemplate').innerHTML;
+                        template = template.replace(/INDEX/g, criteriaIndex++);
+                        
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = template;
+                        const newCriteria = tempDiv.firstElementChild;
+                        
+                        // Kriter verilerini doldur
+                        newCriteria.querySelector('[name$=".name"]').value = criteria.name;
+                        newCriteria.querySelector('[name$=".expectedValue"]').value = criteria.expectedValue;
+                        
+                        criteriaList.appendChild(newCriteria);
+                    });
+                    
+                    // Uyarıyı gizle
+                    if (noCriteriaWarning && criteriaList.children.length > 0) {
+                        noCriteriaWarning.style.display = 'none';
+                    }
+                    
+                    // Kaldırma butonlarını aktifleştir
+                    attachRemoveListeners();
+                    
+                    // Geçti/kaldı değişikliğini izle
+                    attachPassedChangeListeners();
+                });
+            */
+        });
+    });
+    </script>
+</body>
+</html>

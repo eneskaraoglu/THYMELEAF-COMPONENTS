@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalite Kontrol Dashboard</title>
+    
+    <!-- Ortak CSS -->
+    <th:block th:replace="~{fragments :: commonCss}"></th:block>
+    
+    <style>
+        .stats-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .dashboard-chart {
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .recent-item {
+            transition: background-color 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .recent-item:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .recent-item.approved {
+            border-left-color: #28a745;
+        }
+        
+        .recent-item.rejected {
+            border-left-color: #dc3545;
+        }
+        
+        .recent-item.pending {
+            border-left-color: #ffc107;
+        }
+        
+        .recent-item.in-progress {
+            border-left-color: #17a2b8;
+        }
+        
+        .status-badge {
+            font-size: 0.85rem;
+        }
+        
+        .inspector-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #eaeaea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #555;
+            margin-right: 10px;
+        }
+        
+        /* Mobil görünüm için ayarlar */
+        @media (max-width: 768px) {
+            .dashboard-chart {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header navigasyon -->
+        <div th:replace="~{fragments :: header('quality-dashboard')}"></div>
+        
+        <h2 class="mb-4">Kalite Kontrol Dashboard</h2>
+        
+        <!-- İstatistik Kartları -->
+        <div class="row g-4 mb-4">
+            <div class="col-sm-6 col-md-3">
+                <div class="card stats-card h-100 text-white bg-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">Toplam QC</h6>
+                                <h3 class="mb-0" th:text="${stats.totalCount}">325</h3>
+                            </div>
+                            <i class="bi bi-clipboard2-check fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <div class="card stats-card h-100 text-white bg-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">Onaylananlar</h6>
+                                <h3 class="mb-0" th:text="${stats.approvedCount}">245</h3>
+                            </div>
+                            <i class="bi bi-check-circle fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <div class="card stats-card h-100 text-white bg-danger">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">Reddedilenler</h6>
+                                <h3 class="mb-0" th:text="${stats.rejectedCount}">42</h3>
+                            </div>
+                            <i class="bi bi-x-circle fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <div class="card stats-card h-100 text-white bg-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">Bekleyen</h6>
+                                <h3 class="mb-0" th:text="${stats.pendingCount}">38</h3>
+                            </div>
+                            <i class="bi bi-hourglass-split fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grafik ve Son Aktiviteler -->
+        <div class="row g-4">
+            <!-- Aylık Durum Grafiği -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Aylık Kalite Kontrol İstatistikleri</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="monthlyStats" class="dashboard-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Son Aktiviteler -->
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Son Aktiviteler</h5>
+                        <a th:href="@{/quality-controls}" class="btn btn-sm btn-outline-primary">Tümünü Gör</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            <a th:each="activity : ${recentActivities}" 
+                               th:href="@{/quality-controls/edit/{id}(id=${activity.id})}"
+                               class="list-group-item list-group-item-action recent-item"
+                               th:classappend="${activity.status.name() == 'APPROVED' ? 'approved' : 
+                                              (activity.status.name() == 'REJECTED' ? 'rejected' : 
+                                               (activity.status.name() == 'PENDING' ? 'pending' : 'in-progress'))}">
+                               
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div>
+                                        <div class="mb-1">
+                                            <span class="fw-bold" th:text="${activity.qcCode}">QC001</span>
+                                            <span class="ms-2 status-badge"
+                                                  th:class="${activity.status.name() == 'APPROVED' ? 'badge bg-success' : 
+                                                            (activity.status.name() == 'REJECTED' ? 'badge bg-danger' : 
+                                                             (activity.status.name() == 'PENDING' ? 'badge bg-warning' : 'badge bg-info'))}"
+                                                  th:text="${activity.status.displayValue}">
+                                            </span>
+                                        </div>
+                                        <div class="small text-muted">
+                                            <span th:text="${activity.productCode + ' - ' + activity.productName}">PRD001 - Ürün Adı</span>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted" th:text="${#temporals.format(activity.inspectionDate, 'dd/MM/yyyy')}">01/01/2025</small>
+                                </div>
+                                <div class="d-flex mt-2 align-items-center">
+                                    <div class="inspector-avatar">
+                                        <span th:text="${#strings.substring(activity.inspectorName, 0, 1)}">A</span>
+                                    </div>
+                                    <small th:text="${activity.inspectorName}">Ahmet Yılmaz</small>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ürün ve Kriter Bazlı İstatistikler -->
+        <div class="row g-4 mt-2">
+            <!-- Ürünlere Göre Kalite İstatistikleri -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Ürünlere Göre Kalite Performansı</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="productQualityChart" class="dashboard-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Kriterlere Göre Başarı/Başarısızlık Oranları -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Kriterlere Göre Başarısızlık Oranları</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="criteriaFailureChart" class="dashboard-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div th:replace="~{fragments :: footer}"></div>
+    </div>
+
+    <!-- Ortak JavaScript -->
+    <th:block th:replace="~{fragments :: commonJs}"></th:block>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    
+    <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        // Aylık İstatistikler Grafiği
+        const monthlyStatsCanvas = document.getElementById('monthlyStats');
+        const monthlyStatsData = /*[[${monthlyStatsData}]]*/ {};
+        
+        new Chart(monthlyStatsCanvas, {
+            type: 'bar',
+            data: {
+                labels: monthlyStatsData.labels,
+                datasets: [
+                    {
+                        label: 'Onaylanan',
+                        data: monthlyStatsData.approved,
+                        backgroundColor: 'rgba(40, 167, 69, 0.5)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Reddedilen',
+                        data: monthlyStatsData.rejected,
+                        backgroundColor: 'rgba(220, 53, 69, 0.5)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Bekleyen',
+                        data: monthlyStatsData.pending,
+                        backgroundColor: 'rgba(255, 193, 7, 0.5)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'İşlemde',
+                        data: monthlyStatsData.inProgress,
+                        backgroundColor: 'rgba(23, 162, 184, 0.5)',
+                        borderColor: 'rgba(23, 162, 184, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: false,
+                    },
+                    y: {
+                        stacked: false,
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Ürün Kalite Performansı Grafiği
+        const productQualityCanvas = document.getElementById('productQualityChart');
+        const productQualityData = /*[[${productQualityData}]]*/ {};
+        
+        new Chart(productQualityCanvas, {
+            type: 'horizontalBar',
+            data: {
+                labels: productQualityData.labels,
+                datasets: [
+                    {
+                        label: 'Başarı Oranı (%)',
+                        data: productQualityData.successRates,
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Başarı Oranı (%)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Kriterlere Göre Başarısızlık Oranları Grafiği
+        const criteriaFailureCanvas = document.getElementById('criteriaFailureChart');
+        const criteriaFailureData = /*[[${criteriaFailureData}]]*/ {};
+        
+        new Chart(criteriaFailureCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: criteriaFailureData.labels,
+                datasets: [
+                    {
+                        data: criteriaFailureData.failureRates,
+                        backgroundColor: [
+                            'rgba(220, 53, 69, 0.7)',
+                            'rgba(255, 193, 7, 0.7)',
+                            'rgba(108, 117, 125, 0.7)',
+                            'rgba(23, 162, 184, 0.7)',
+                            'rgba(111, 66, 193, 0.7)',
+                            'rgba(246, 84, 0, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(220, 53, 69, 1)',
+                            'rgba(255, 193, 7, 1)',
+                            'rgba(108, 117, 125, 1)',
+                            'rgba(23, 162, 184, 1)',
+                            'rgba(111, 66, 193, 1)',
+                            'rgba(246, 84, 0, 1)'
+                        ],
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.raw + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+    </script>
+</body>
+</html>
