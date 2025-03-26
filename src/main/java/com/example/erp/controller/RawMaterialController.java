@@ -28,6 +28,7 @@ public class RawMaterialController {
         model.addAttribute("filter", new RawMaterialFilter());
         model.addAttribute("categories", rawMaterialService.findAllCategories());
         model.addAttribute("suppliers", rawMaterialService.findAllSuppliers());
+        model.addAttribute("pageTitle", "Hammadde Stok Yönetimi");
         return "raw-materials/raw-material-list";
     }
 
@@ -37,12 +38,14 @@ public class RawMaterialController {
         model.addAttribute("filter", filter);
         model.addAttribute("categories", rawMaterialService.findAllCategories());
         model.addAttribute("suppliers", rawMaterialService.findAllSuppliers());
+        model.addAttribute("pageTitle", "Hammadde Stok Yönetimi - Filtrelenmiş");
         return "raw-materials/raw-material-list";
     }
 
     @GetMapping("/add")
     public String showAddForm(Model model) {
         model.addAttribute("rawMaterial", new RawMaterial());
+        model.addAttribute("pageTitle", "Yeni Hammadde Ekle");
         return "raw-materials/raw-material-form";
     }
 
@@ -50,6 +53,7 @@ public class RawMaterialController {
     public String showEditForm(@PathVariable Long id, Model model) {
         RawMaterial rawMaterial = rawMaterialService.findById(id);
         model.addAttribute("rawMaterial", rawMaterial);
+        model.addAttribute("pageTitle", "Hammadde Düzenle: " + rawMaterial.getName());
         return "raw-materials/raw-material-form";
     }
 

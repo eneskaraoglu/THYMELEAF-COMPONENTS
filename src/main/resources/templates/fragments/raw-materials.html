@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Raw Materials</title>
+</head>
+<body>
+<!-- Hammadde Filtreleme Formu -->
+<div th:fragment="filter-form-content">
+    <div class="col-md-3">
+        <label for="name" class="form-label">Hammadde Adı</label>
+        <input type="text" class="form-control" id="name" th:field="*{name}" placeholder="Hammadde adı ile ara">
+    </div>
+    <div class="col-md-3">
+        <label for="category" class="form-label">Kategori</label>
+        <select class="form-select" id="category" th:field="*{category}">
+            <option value="">Tüm Kategoriler</option>
+            <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}"></option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="supplier" class="form-label">Tedarikçi</label>
+        <select class="form-select" id="supplier" th:field="*{supplier}">
+            <option value="">Tüm Tedarikçiler</option>
+            <option th:each="sup : ${suppliers}" th:value="${sup}" th:text="${sup}"></option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="lowStock" th:field="*{lowStock}">
+            <label class="form-check-label" for="lowStock">Düşük Stok</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="needsReorder" th:field="*{needsReorder}">
+            <label class="form-check-label" for="needsReorder">Sipariş Gerekli</label>
+        </div>
+    </div>
+</div>
+
+<!-- Hammadde Listesi İçeriği -->
+<div th:fragment="list-content" class="container py-4">
+    <header class="mb-4">
+        <h1 th:text="${pageTitle} ?: 'Hammadde Stok Yönetimi'">Hammadde Stok Yönetimi</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/}">Ana Sayfa</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Hammadde Stok Yönetimi</li>
+            </ol>
+        </nav>
+    </header>
+    
+    <!-- Header Fragment -->
+    <div th:replace="fragments :: header('raw-materials')"></div>
+    
+    <!-- Butonlar -->
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <a th:href="@{/raw-materials/add}" class="btn btn-primary">
+                <i class="bi bi-plus"></i> Yeni Hammadde Ekle
+            </a>
+        </div>
+        <div>
+            <a th:href="@{/raw-materials/low-stock}" class="btn btn-warning me-2">
+                <i class="bi bi-exclamation-triangle"></i> Düşük Stok
+            </a>
+            <a th:href="@{/raw-materials/needs-reorder}" class="btn btn-danger">
+                <i class="bi bi-bag-plus"></i> Sipariş Gerektiren
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filtreleme Formu -->
+    <div th:replace="fragments/list :: filter-form (formAction=@{/raw-materials/filter}, filterObject=${filter}, formContent='~{fragments/raw-materials :: filter-form-content}')"></div>
+    
+    <!-- Hammadde Tablosu -->
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Kod</th>
+                    <th>Hammadde Adı</th>
+                    <th>Kategori</th>
+                    <th>Miktar</th>
+                    <th>Birim</th>
+                    <th>Min. Stok</th>
+                    <th>Sipariş Noktası</th>
+                    <th>Lokasyon</th>
+                    <th>Tedarikçi</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="material : ${rawMaterials}" 
+                    th:class="${material.quantity <= material.minimumStock ? 'low-stock' : ''} + ' ' + ${material.quantity <= material.reorderPoint ? 'reorder' : ''}">
+                    <td th:text="${material.code}">HAM001</td>
+                    <td th:text="${material.name}">Hammadde Adı</td>
+                    <td th:text="${material.category}">Kategori</td>
+                    <td th:text="${material.quantity}">100</td>
+                    <td th:text="${material.unit}">kg</td>
+                    <td th:text="${material.minimumStock}">20</td>
+                    <td th:text="${material.reorderPoint}">50</td>
+                    <td th:text="${material.location}">A-101</td>
+                    <td th:text="${material.supplier}">Tedarikçi A</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a th:href="@{/raw-materials/edit/{id}(id=${material.id})}" class="btn btn-warning">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a th:href="@{/raw-materials/delete/{id}(id=${material.id})}" class="btn btn-danger"
+                               onclick="return confirm('Bu hammaddeyi silmek istediğinize emin misiniz?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${rawMaterials.empty}">
+                    <td colspan="10" class="text-center">Kayıtlı hammadde bulunamadı</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="mt-3 text-muted">
+        <p><small>* Düşük stok seviyesindeki hammaddeler sarı, sipariş gerektiren hammaddeler kırmızı ile işaretlenmiştir.</small></p>
+    </div>
+    
+    <div class="my-4">
+        <a th:href="@{/}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Ana Sayfaya Dön
+        </a>
+    </div>
+    
+    <!-- Footer Fragment -->
+    <div th:replace="fragments :: footer"></div>
+</div>
+
+<!-- Hammadde Form İçeriği -->
+<div th:fragment="form-content" class="container py-4">
+    <div class="form-container">
+        <header class="mb-4">
+            <h1 th:text="${rawMaterial.id == null ? 'Yeni Hammadde Ekle' : 'Hammadde Düzenle'}">Hammadde Formu</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/}">Ana Sayfa</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/raw-materials}">Hammadde Stok Yönetimi</a></li>
+                    <li class="breadcrumb-item active" aria-current="page" th:text="${rawMaterial.id == null ? 'Yeni Hammadde' : 'Hammadde Düzenle'}">Hammadde Formu</li>
+                </ol>
+            </nav>
+        </header>
+        
+        <!-- Header Fragment -->
+        <div th:replace="fragments :: header('raw-materials')"></div>
+        
+        <div class="card">
+            <div class="card-body">
+                <form th:action="@{/raw-materials/save}" method="post" th:object="${rawMaterial}">
+                    <input type="hidden" th:field="*{id}">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="code" class="form-label required-field">Hammadde Kodu</label>
+                            <input type="text" class="form-control" id="code" th:field="*{code}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="name" class="form-label required-field">Hammadde Adı</label>
+                            <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="description" th:field="*{description}" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="quantity" class="form-label required-field">Miktar</label>
+                            <input type="number" class="form-control" id="quantity" th:field="*{quantity}" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="unit" class="form-label required-field">Birim</label>
+                            <select class="form-select" id="unit" th:field="*{unit}" required>
+                                <option value="">Birim Seçin</option>
+                                <option value="kg">Kilogram (kg)</option>
+                                <option value="g">Gram (g)</option>
+                                <option value="lt">Litre (lt)</option>
+                                <option value="ml">Mililitre (ml)</option>
+                                <option value="m">Metre (m)</option>
+                                <option value="cm">Santimetre (cm)</option>
+                                <option value="adet">Adet</option>
+                                <option value="paket">Paket</option>
+                                <option value="kutu">Kutu</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="category" class="form-label">Kategori</label>
+                            <input type="text" class="form-control" id="category" th:field="*{category}">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="minimumStock" class="form-label">Minimum Stok</label>
+                            <input type="number" class="form-control" id="minimumStock" th:field="*{minimumStock}" min="0" step="0.01">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="reorderPoint" class="form-label">Sipariş Noktası</label>
+                            <input type="number" class="form-control" id="reorderPoint" th:field="*{reorderPoint}" min="0" step="0.01">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="location" class="form-label">Depo Lokasyonu</label>
+                            <input type="text" class="form-control" id="location" th:field="*{location}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="supplier" class="form-label">Tedarikçi</label>
+                        <input type="text" class="form-control" id="supplier" th:field="*{supplier}">
+                    </div>
+                    
+                    <div class="mt-4 d-flex justify-content-between">
+                        <a th:href="@{/raw-materials}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> İptal
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Footer Fragment -->
+        <div th:replace="fragments :: footer"></div>
+    </div>
+</div>
+</body>
+</html>
