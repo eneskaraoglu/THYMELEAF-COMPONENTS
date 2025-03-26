@@ -1,3 +1,16 @@
+-- Hammadde verileri
+INSERT INTO raw_materials (id, code, name, description, unit, quantity, minimum_stock, reorder_point, location, supplier, category) VALUES
+(1, 'HAM001', 'Alüminyum Profil', 'Standart alüminyum profil', 'metre', 150.5, 50.0, 80.0, 'A-101', 'Metal A.Ş.', 'Metal'),
+(2, 'HAM002', 'Çelik Sac', '1.5mm kalınlığında çelik sac', 'kg', 300.0, 100.0, 150.0, 'A-102', 'Metal A.Ş.', 'Metal'),
+(3, 'HAM003', 'Plastik Granül', 'ABS plastik granül', 'kg', 80.0, 30.0, 50.0, 'B-201', 'Plastik Sanayi Ltd.', 'Plastik'),
+(4, 'HAM004', 'Silikon Conta', 'Isıya dayanıklı silikon conta', 'metre', 45.0, 20.0, 30.0, 'B-202', 'Conta Ltd.', 'Kauçuk'),
+(5, 'HAM005', 'Vida M4', 'M4 çapında 10mm uzunluğunda vida', 'adet', 2500, 500, 1000, 'C-301', 'Bağlantı Elemanları A.Ş.', 'Bağlantı Elemanı'),
+(6, 'HAM006', 'Boya - Kırmızı', 'Endüstriyel kırmızı boya', 'lt', 25.0, 10.0, 15.0, 'C-302', 'Boya Kimya A.Ş.', 'Boya'),
+(7, 'HAM007', 'Boya - Mavi', 'Endüstriyel mavi boya', 'lt', 8.0, 10.0, 15.0, 'C-303', 'Boya Kimya A.Ş.', 'Boya'),
+(8, 'HAM008', 'Bakır Tel', '2mm çapında bakır tel', 'kg', 120.0, 40.0, 60.0, 'D-401', 'Metal A.Ş.', 'Metal'),
+(9, 'HAM009', 'Elektrik Kablosu', '3x1.5mm elektrik kablosu', 'metre', 350.0, 100.0, 200.0, 'D-402', 'Elektrik Malzemeleri Ltd.', 'Elektrik'),
+(10, 'HAM010', 'Isı Yalıtım Bandı', 'Yüksek ısı yalıtım bandı', 'metre', 18.0, 20.0, 40.0, 'D-403', 'Yalıtım A.Ş.', 'Yalıtım');
+
 INSERT INTO product (code, name, price, stock, description, manufacturing_date, expiry_date)
 VALUES
 ('IND001', 'Hidrolik Yağ', 1250.50, 100, 'Endüstriyel Hidrolik Sistem Yağı 20L', '2024-03-01', '2025-03-01'),

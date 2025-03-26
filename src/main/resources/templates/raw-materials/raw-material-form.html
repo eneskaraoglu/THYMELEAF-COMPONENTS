@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${rawMaterial.id == null ? 'Yeni Hammadde Ekle' : 'Hammadde Düzenle'}">Hammadde Formu</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    
+    <style>
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .required-field::after {
+            content: " *";
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="form-container">
+            <header class="mb-4">
+                <h1 th:text="${rawMaterial.id == null ? 'Yeni Hammadde Ekle' : 'Hammadde Düzenle'}">Hammadde Formu</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/}">Ana Sayfa</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/raw-materials}">Hammadde Stok Yönetimi</a></li>
+                        <li class="breadcrumb-item active" aria-current="page" th:text="${rawMaterial.id == null ? 'Yeni Hammadde' : 'Hammadde Düzenle'}">Hammadde Formu</li>
+                    </ol>
+                </nav>
+            </header>
+            
+            <div class="card">
+                <div class="card-body">
+                    <form th:action="@{/raw-materials/save}" method="post" th:object="${rawMaterial}">
+                        <input type="hidden" th:field="*{id}">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="code" class="form-label required-field">Hammadde Kodu</label>
+                                <input type="text" class="form-control" id="code" th:field="*{code}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="name" class="form-label required-field">Hammadde Adı</label>
+                                <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Açıklama</label>
+                            <textarea class="form-control" id="description" th:field="*{description}" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="quantity" class="form-label required-field">Miktar</label>
+                                <input type="number" class="form-control" id="quantity" th:field="*{quantity}" min="0" step="0.01" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="unit" class="form-label required-field">Birim</label>
+                                <select class="form-select" id="unit" th:field="*{unit}" required>
+                                    <option value="">Birim Seçin</option>
+                                    <option value="kg">Kilogram (kg)</option>
+                                    <option value="g">Gram (g)</option>
+                                    <option value="lt">Litre (lt)</option>
+                                    <option value="ml">Mililitre (ml)</option>
+                                    <option value="m">Metre (m)</option>
+                                    <option value="cm">Santimetre (cm)</option>
+                                    <option value="adet">Adet</option>
+                                    <option value="paket">Paket</option>
+                                    <option value="kutu">Kutu</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="category" class="form-label">Kategori</label>
+                                <input type="text" class="form-control" id="category" th:field="*{category}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="minimumStock" class="form-label">Minimum Stok</label>
+                                <input type="number" class="form-control" id="minimumStock" th:field="*{minimumStock}" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="reorderPoint" class="form-label">Sipariş Noktası</label>
+                                <input type="number" class="form-control" id="reorderPoint" th:field="*{reorderPoint}" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="location" class="form-label">Depo Lokasyonu</label>
+                                <input type="text" class="form-control" id="location" th:field="*{location}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="supplier" class="form-label">Tedarikçi</label>
+                            <input type="text" class="form-control" id="supplier" th:field="*{supplier}">
+                        </div>
+                        
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a th:href="@{/raw-materials}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> İptal
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS ve Bootstrap Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</body>
+</html>
